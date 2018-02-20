@@ -19,18 +19,17 @@ def tokenizer(all_lines):
 		if count == 2: #- gets the year of the date
 
 			file_name = "corpus/"+curr_line[len(curr_line)-1]+"-corpus.txt"
-			print file_name
 
 			if os.path.exists(file_name):
-				type_action = "r+"
+				type_action = "a"
 				new = False
 			else:
 				type_action = "w"
 				new = True
 
-			corpus = open(file_name, "w")
-			if new:
-				json.dump([""], corpus)
+			print file_name, new
+
+			corpus = open(file_name, type_action)
 			# corpus.clo-se
 
 		elif count > 3: # start to tokenize at line 4 of the current file
@@ -81,44 +80,30 @@ def tokenizer(all_lines):
 
 							written = True
 
-					print curr_string, written, title
+					# print curr_string, written, title
 					prev_string = curr_string
 
 		count += 1
 
-	# print valid_data
-	# unique_corpus(valid_data)
-	# try:
-	# 	print "why"
-	# 	corpus = open(file_name, "w-")
-	# 	corpus_data = json.load(corpus)
+	# json.dump(valid_data, corpus)
+	# or
+	for vd in valid_data:
+		corpus.write(vd+"\n")
 
-	# 	print corpus_data
-
-	# 	for curr_str in valid_data:
-	# 		if curr_str not in corpus_data:
-	# 			corpus_data.append(curr_str)
-
-	# 	json.dump(corpus_data, corpus)
-	# except IOError:
-	# 	print "n-ani-"
-
-	# print "in unique_corpus", valid_data
-
-	json.dump(valid_data, corpus)
 	corpus.close()
 
 
 	# code for the unique corpus
 	if os.stat(UNIQUE_CORPUS).st_size > 2:
 		print "not empty"
-		with open(UNIQUE_CORPUS, mode = "w") as uc:
+		with open(UNIQUE_CORPUS, mode = "r") as uc:
 			uc_data = json.load(uc)
+		uc.close()
 
+		with open(UNIQUE_CORPUS, mode = "w") as uc:
 			for curr_str in valid_data:
 				if curr_str not in uc_data:
 					uc_data.append(curr_str)
-
 			json.dump(uc_data, uc)
 
 		uc.close()
@@ -126,8 +111,6 @@ def tokenizer(all_lines):
 		with open(UNIQUE_CORPUS, mode = "w") as uc:
 			json.dump(valid_data, uc)
 		uc.close()
-
-	# with 
 
 def unique_corpus(valid_data):
 	corpus_file = open("corpus/2009-corpus.txt", "w")
@@ -162,7 +145,7 @@ def main():
 
 		for file in files:
 			file_path = path+"/"+file
-			
+			# print file_path
 
 			try:
 				curr_file = open(file_path)
@@ -171,7 +154,7 @@ def main():
 				# tokenizer(lines)
 
 				# testing purposes
-				if count == 1:
+				if count <= 3:
 					# print count, file_path
 					tokenizer(lines)
 					# check_duplicate()
@@ -180,17 +163,6 @@ def main():
 				else:
 					True
 					# print count, file_path
-
-				
-
-				# code to print out specific number of lines only
-				# with open(file_path) as curr_file:
-				# 	# head = [next(curr_file) for x in xrange(2)]
-				# 	head = list(islice(curr_file, 2))
-
-				# 	print head
-				# 	count = count + 1
-				# 	True
 
 			except IOError:
 				print ("could not read") 
@@ -206,3 +178,13 @@ with open(UNIQUE_CORPUS, mode = "w") as uc:
 
 uc.close()
 main()
+
+
+# code to print out specific number of lines only
+				# with open(file_path) as curr_file:
+				# 	# head = [next(curr_file) for x in xrange(2)]
+				# 	head = list(islice(curr_file, 2))
+
+				# 	print head
+				# 	count = count + 1
+				# 	True
