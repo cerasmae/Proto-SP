@@ -1,5 +1,6 @@
 import sys, os, re, unittest
 import unicodedata
+import json
 from itertools import islice
 
 # MAIN
@@ -8,22 +9,29 @@ from itertools import islice
 def tokenizer(all_lines):
 	count = 1
 	prev_string = ""
+	valid_data = []
+	new = True
 	for line in all_lines:
 
 		curr_line = line.split()
 		# print curr_line, len(curr_line), curr_line[len(curr_line)-1]
 
-		if count == 2: # gets the year of the date
+		if count == 2: #- gets the year of the date
 
 			file_name = "corpus/"+curr_line[len(curr_line)-1]+"-corpus.txt"
 			print file_name
 
 			if os.path.exists(file_name):
-				type_action = "a"
+				type_action = "r+"
+				new = False
 			else:
 				type_action = "w"
+				new = True
 
-			corpus = open(file_name, type_action)
+			corpus = open(file_name, "w")
+			if new:
+				json.dump([""], corpus)
+			# corpus.clo-se
 
 		elif count > 3: # start to tokenize at line 4 of the current file
 
@@ -36,21 +44,24 @@ def tokenizer(all_lines):
 					written = False
 					proper_noun = False
 					
-					if curr_string.istitle():
+					if curr_string.istitle(): # if the first letter of the word is uppercase
 						title = 1
-						if prev_string is not "":
+						if prev_string is not "": 	# if the word is not the very first word of the document
 							last_ch = prev_string[len(prev_string)-1]
-							if last_ch != "." and last_ch != ")":
-								proper_noun = True
+							if last_ch != "." and last_ch != ")": 	# checks if the previous string has a period .
+								proper_noun = True					# it's a proper noun if there is no . in the prev_str
 
 						if not proper_noun:
-							cleaned_str = re.sub(r'[^A-Za-z.\\\'-]', '', curr_string)
+							cleaned_str = re.sub(r'[^A-Za-z.\\\'-]', '', curr_string)	# removes other characters that are not alphabet and selected symbols
 							cleaned_str = cleaned_str.lower()
 							
 							if cleaned_str[len(cleaned_str)-1] == ".":
 								cleaned_str = cleaned_str[:-1]
 
-							corpus.write(cleaned_str +"\n")
+							if cleaned_str not in valid_data:	# checks if current cleaned string is unique
+								valid_data.append(cleaned_str)
+
+							# corpus.write(cleaned_str +"\n")
 							written = True
 
 					else:
@@ -58,11 +69,16 @@ def tokenizer(all_lines):
 						cleaned_str = re.sub(r'[^A-Za-z.\\\'-]', '', curr_string)
 						cleaned_str = cleaned_str.lower()
 
-						if len(cleaned_str) >- 0:
+						if len(cleaned_str) > 0:
 							if cleaned_str[len(cleaned_str)-1] == ".":
 								cleaned_str = cleaned_str[:-1]
 
-							corpus.write(cleaned_str +"\n")
+							# json.dump(cleaned_str, corpus, ensure_ascii=False)
+							# corpus.write(cleaned_str +"\n")
+							
+							if cleaned_str not in valid_data: # checks if current cleaned string is unique
+								valid_data.append(cleaned_str)
+
 							written = True
 
 					print curr_string, written, title
@@ -70,7 +86,62 @@ def tokenizer(all_lines):
 
 		count += 1
 
+	# print valid_data
+	# unique_corpus(valid_data)
+	# try:
+	# 	print "why"
+	# 	corpus = open(file_name, "w-")
+	# 	corpus_data = json.load(corpus)
+
+	# 	print corpus_data
+
+	# 	for curr_str in valid_data:
+	# 		if curr_str not in corpus_data:
+	# 			corpus_data.append(curr_str)
+
+	# 	json.dump(corpus_data, corpus)
+	# except IOError:
+	# 	print "n-ani-"
+
+	# print "in unique_corpus", valid_data
+
+	json.dump(valid_data, corpus)
 	corpus.close()
+
+
+	# code for the unique corpus
+	if os.stat(UNIQUE_CORPUS).st_size > 2:
+		print "not empty"
+		with open(UNIQUE_CORPUS, mode = "w") as uc:
+			uc_data = json.load(uc)
+
+			for curr_str in valid_data:
+				if curr_str not in uc_data:
+					uc_data.append(curr_str)
+
+			json.dump(uc_data, uc)
+
+		uc.close()
+	else:
+		with open(UNIQUE_CORPUS, mode = "w") as uc:
+			json.dump(valid_data, uc)
+		uc.close()
+
+	# with 
+
+def unique_corpus(valid_data):
+	corpus_file = open("corpus/2009-corpus.txt", "w")
+	corpus_data = json.load(corpus_file)
+
+	print "in unique_corpus", valid_data
+
+	for curr_str in valid_data:
+		if curr_str not in corpus_data:
+			corpus_data.append(currstr)
+
+	json.dump(corpus_data, corpus_file)
+
+	corpus_file.close()
 
 
 def main():
@@ -103,6 +174,7 @@ def main():
 				if count == 1:
 					# print count, file_path
 					tokenizer(lines)
+					# check_duplicate()
 					# for line in lines:
 					# 	print line
 				else:
@@ -128,4 +200,9 @@ def main():
 	except IOError:
 		print ("something is probably wrong with the path")
 
+UNIQUE_CORPUS = "/home/cerasmae/Desktop/SP/Proto-SP/corpus/unique-corpus.txt"
+with open(UNIQUE_CORPUS, mode = "w") as uc:
+	json.dump([], uc)
+
+uc.close()
 main()
