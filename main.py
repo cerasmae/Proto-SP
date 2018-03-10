@@ -6,19 +6,39 @@ from itertools import islice
 # MAIN
 
 # tokenizes the words, leaves out names
+
+def hasNumbers(inputString):
+	return any(char.isdigit() for char in inputString)
+
+def notALink(str):
+	link = False
+
+	if ".com" not in str and ".org" not in str:
+		link = True
+	if "http" not in str:
+		link = link and True
+
+	return link
+
 def tokenizer(all_lines):
 	count = 1
+	corpus_data = {}
 	prev_string = ""
 	valid_data = []
 	new = True
+	curr_data = {}
 	for line in all_lines:
 
 		curr_line = line.split()
 		# print curr_line, len(curr_line), curr_line[len(curr_line)-1]
 
-		if count == 2: #- gets the year of the date
+		if count == 1:
+			print line
+			curr_data['title'] = line.upper()
 
-			file_name = "corpus/"+curr_line[len(curr_line)-1]+"-corpus.txt"
+		elif count == 2: #- gets the year of the date
+
+			file_name = "corpus/"+curr_line[len(curr_line)-1]+"-corpus.json"
 
 			if os.path.exists(file_name):
 				type_action = "a"
@@ -30,7 +50,19 @@ def tokenizer(all_lines):
 			print file_name, new
 
 			corpus = open(file_name, type_action)
+			
+			if not new:
+				corpus_data = json.load(corpus)
+			else:
+				corpus_data = {}
+				corpus_data['corpus'] = []
+				# json.dump(corpus_data-, corpus)
 			# corpus.clo-se
+
+			curr_data['date'] = line
+
+		elif count == 3:
+			curr_data['author'] = line.upper()
 
 		elif count > 3: # start to tokenize at line 4 of the current file
 
@@ -51,49 +83,63 @@ def tokenizer(all_lines):
 								proper_noun = True					# it's a proper noun if there is no . in the prev_str
 
 						if not proper_noun:
-							cleaned_str = re.sub(r'[^A-Za-z.\\\'-]', '', curr_string)	# removes other characters that are not alphabet and selected symbols
-							cleaned_str = cleaned_str.lower()
-							
-							if cleaned_str[len(cleaned_str)-1] == ".":
-								cleaned_str = cleaned_str[:-1]
 
-							if cleaned_str not in valid_data:	# checks if current cleaned string is unique
+							if not hasNumbers(curr_string) and notALink(curr_string):	# check if string does not have any number or any ".com" to signify a link
+								cleaned_str = re.sub(r'[^A-Za-z.\\\'-]', '', curr_string)	# removes other characters that are not alphabet and selected symbols
+								cleaned_str = cleaned_str.lower()
+								
+								if cleaned_str[len(cleaned_str)-1] == ".":
+									cleaned_str = cleaned_str[:-1]
+
+								# if cleaned_str not in valid_data:	# checks if current cleaned string is unique
 								valid_data.append(cleaned_str)
 
-							# corpus.write(cleaned_str +"\n")
-							written = True
+								# corpus.write(cleaned_str +"\n")
+								written = True
+
+							else:
+								written = False
 
 					else:
 						title = 2
-						cleaned_str = re.sub(r'[^A-Za-z.\\\'-]', '', curr_string)
-						cleaned_str = cleaned_str.lower()
+						
+						if not hasNumbers(curr_string) and notALink(curr_string): # check if string does not have any number or any ".com" to signify a link
+							cleaned_str = re.sub(r'[^A-Za-z.\\\'-]', '', curr_string)
+							cleaned_str = cleaned_str.lower()
 
-						if len(cleaned_str) > 0:
-							if cleaned_str[len(cleaned_str)-1] == ".":
-								cleaned_str = cleaned_str[:-1]
+							if len(cleaned_str) > 0:
+								if cleaned_str[len(cleaned_str)-1] == ".":
+									cleaned_str = cleaned_str[:-1]
 
-							# json.dump(cleaned_str, corpus, ensure_ascii=False)
-							# corpus.write(cleaned_str +"\n")
-							
-							if cleaned_str not in valid_data: # checks if current cleaned string is unique
+								# json.dump(cleaned_str, corpus, ensure_ascii=False)
+								# corpus.write(cleaned_str +"\n")
+								
+								# if cleaned_str not in valid_data: # checks if current cleaned string is unique
 								valid_data.append(cleaned_str)
 
-							written = True
+								written = True
+
+						else:
+							written = False
 
 					# print curr_string, written, title
 					prev_string = curr_string
 
 		count += 1
 
-	# json.dump(valid_data, corpus)
+	curr_data['words'] = valid_data
+
+	corpus_data['corpus'].append(curr_data)
+
+	json.dump(corpus_data, corpus)
 	# or
-	for vd in valid_data:
-		corpus.write(vd+"\n")
+	# for vd in valid_data:
+	# 	corpus.write(vd+"\n")
 
 	corpus.close()
 
 
-	# code for the unique corpus
+	# code for th-e unique corpus
 	if os.stat(UNIQUE_CORPUS).st_size > 2:
 		print "not empty"
 		with open(UNIQUE_CORPUS, mode = "r") as uc:
@@ -126,6 +172,22 @@ def unique_corpus(valid_data):
 
 	corpus_file.close()
 
+def trying():
+	corpus_file = open("corpus/2008-corpus.json", "r")
+	corpus_data = json.load(corpus_file)
+
+	print "in trying"
+
+	print corpus_data
+
+	# for curr_str in valid_data:
+	# 	if curr_str not in corpus_data:-
+	# 		corpus_data.append(currstr)
+
+	# json.dump(corpus_data, corpus_file)
+
+	corpus_file.close()
+
 
 def main():
 	path = "/home/cerasmae/Desktop/SP/cleaned-data";
@@ -155,7 +217,7 @@ def main():
 
 				# testing purposes
 				if count <= 3:
-					# print count, file_path
+					print count, file_path
 					tokenizer(lines)
 					# check_duplicate()
 					# for line in lines:
@@ -172,12 +234,13 @@ def main():
 	except IOError:
 		print ("something is probably wrong with the path")
 
-UNIQUE_CORPUS = "/home/cerasmae/Desktop/SP/Proto-SP/corpus/unique-corpus.txt"
+UNIQUE_CORPUS = "/home/cerasmae/Desktop/SP/Proto-SP/corpus/unique-corpus.json"
 with open(UNIQUE_CORPUS, mode = "w") as uc:
 	json.dump([], uc)
 
 uc.close()
 main()
+trying()
 
 
 # code to print out specific number of lines only
