@@ -41,23 +41,28 @@ def tokenizer(all_lines):
 			file_name = "corpus/"+curr_line[len(curr_line)-1]+"-corpus.json"
 
 			if os.path.exists(file_name):
-				type_action = "a"
+				type_action = "r"
 				new = False
 			else:
 				type_action = "w"
 				new = True
 
-			print file_name, new
+			print file_name, new, type_action
 
-			corpus = open(file_name, type_action)
+			
 			
 			if not new:
+				print "not new-"
+				corpus = open(file_name)
 				corpus_data = json.load(corpus)
+				print corpus_data
+				print "why"
 			else:
+				corpus = open(file_name, "w")
 				corpus_data = {}
 				corpus_data['corpus'] = []
 				# json.dump(corpus_data-, corpus)
-			# corpus.clo-se
+			corpus.close()
 
 			curr_data['date'] = line
 
@@ -130,7 +135,7 @@ def tokenizer(all_lines):
 	curr_data['words'] = valid_data
 
 	corpus_data['corpus'].append(curr_data)
-
+	corpus = open(file_name, "w-")
 	json.dump(corpus_data, corpus)
 	# or
 	# for vd in valid_data:
@@ -240,7 +245,7 @@ with open(UNIQUE_CORPUS, mode = "w") as uc:
 
 uc.close()
 main()
-trying()
+# trying()
 
 
 # code to print out specific number of lines only
