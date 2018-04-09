@@ -2,8 +2,10 @@ import sys, os, re, unittest
 import unicodedata
 import json
 from itertools import islice
+# https://www.loc.gov/standards/iso639-2/php/code_list.php
+from langdetect import detect
 
-# MAIN
+# MAIN 
 
 # tokenizes the words, leaves out names
 
@@ -55,8 +57,8 @@ def tokenizer(all_lines):
 				print "not new-"
 				corpus = open(file_name)
 				corpus_data = json.load(corpus)
-				print corpus_data
-				print "why"
+				# print corpus_data
+				# print "why"
 			else:
 				corpus = open(file_name, "w")
 				corpus_data = {}
@@ -127,41 +129,50 @@ def tokenizer(all_lines):
 						else:
 							written = False
 
-					# print curr_string, written, title
+					# if written:
+					# 	print curr_string, written, title, detect(curr_string.decode('utf-8').strip())
+					# else:
+					# 	print curr_string, written, title
+
+
 					prev_string = curr_string
 
 		count += 1
 
-	curr_data['words'] = valid_data
+	valid_data = check_english_dict(valid_data)
 
-	corpus_data['corpus'].append(curr_data)
-	corpus = open(file_name, "w-")
-	json.dump(corpus_data, corpus)
+	print valid_data, "what"
+
+	# curr_data['words'] = valid_data
+
+	# corpus_data['corpus'].append(curr_data)
+	# corpus = open(file_name, "w-")
+	# json.dump(corpus_data, corpus)
 	# or
 	# for vd in valid_data:
 	# 	corpus.write(vd+"\n")
 
-	corpus.close()
+	# corpus.close()
 
 
 	# code for th-e unique corpus
-	if os.stat(UNIQUE_CORPUS).st_size > 2:
-		print "not empty"
-		with open(UNIQUE_CORPUS, mode = "r") as uc:
-			uc_data = json.load(uc)
-		uc.close()
+	# if os.stat(UNIQUE_CORPUS).st_size > 2:
+	# 	print "not empty"
+	# 	with open(UNIQUE_CORPUS, mode = "r") as uc:
+	# 		uc_data = json.load(uc)
+	# 	uc.close()
 
-		with open(UNIQUE_CORPUS, mode = "w") as uc:
-			for curr_str in valid_data:
-				if curr_str not in uc_data:
-					uc_data.append(curr_str)
-			json.dump(uc_data, uc)
+	# 	with open(UNIQUE_CORPUS, mode = "w") as uc:
+	# 		for curr_str in valid_data:
+	# 			if curr_str not in uc_data:
+	# 				uc_data.append(curr_str)
+	# 		json.dump(uc_data, uc)
 
-		uc.close()
-	else:
-		with open(UNIQUE_CORPUS, mode = "w") as uc:
-			json.dump(valid_data, uc)
-		uc.close()
+	# 	uc.close()
+	# else:
+	# 	with open(UNIQUE_CORPUS, mode = "w") as uc:
+	# 		json.dump(valid_data, uc)
+	# 	uc.close()
 
 def unique_corpus(valid_data):
 	corpus_file = open("corpus/2009-corpus.txt", "w")
@@ -177,13 +188,99 @@ def unique_corpus(valid_data):
 
 	corpus_file.close()
 
+def check_english_dict(valid_data):
+	eng_dict = open("words_dictionary.json", "r")
+	eng_dict_data = json.load(eng_dict)
+	eng_dict.close()
+
+	words = valid_data
+	removed_words = []
+
+	for i in range(len(words)):
+		try:
+			if eng_dict_data[words[i]] == 1:
+				# words.remove(words[i])
+				removed_words.append(words[i])
+
+		except Exception, e:
+			repr(e)
+
+	
+
+	print removed_words
+
+	try:
+		wordsjson = open("removed_words.json", "r")
+		rw_data = json.load(wordsjson)
+		wordsjson.close()
+
+
+		wordsjson = open("removed_words.json", "w")
+
+		for removed_word in removed_words:
+			rw_data[removed_word] = 1
+
+		json.dump(rw_data, wordsjson)
+		wordsjson.close()
+
+	except Exception, e:
+		print repr(e)
+
+	return words
+
+
+def remove_words():
+	wordsjson = open("removed_words.json", "r")
+	rw_data = json.load(wordsjson)
+	wordsjson.close()
+
+	to_remove = []
+
+	for words in rw_data:
+		if rw_data[words] == 0:
+			to_remove.append(words)
+
+	print to_remove
+
+	for tr_word in to_remove:
+		rw_data.pop(tr_word)
+
+	print "after"
+	print rw_data
+
+	wordsjson = open("removed_words.json", "w")
+	json.dump(rw_data, wordsjson)
+	wordsjson.close()
+
+	eng_dict = open("words_dictionary.json", "r")
+	eng_dict_data = json.load(eng_dict)
+	eng_dict.close()
+
+	for tr_word in to_remove:
+		try:
+			eng_dict_data.pop(tr_word)
+
+		except Exception, e:
+			repr(e)
+
+	eng_dict = open("words_dictionary.json", "w")
+	json.dump(eng_dict_data, eng_dict)
+	eng_dict.close()
+
 def trying():
-	corpus_file = open("corpus/2008-corpus.json", "r")
+	corpus_file = open("words_dictionary.json", "r")
 	corpus_data = json.load(corpus_file)
+	val = 0
 
 	print "in trying"
 
-	print corpus_data
+	try:
+		val = corpus_data["bahog"]
+	except Exception, e:
+		print repr(e)
+		val = -1
+
+	# print corpus_data
 
 	# for curr_str in valid_data:
 	# 	if curr_str not in corpus_data:-
@@ -192,10 +289,15 @@ def trying():
 	# json.dump(corpus_data, corpus_file)
 
 	corpus_file.close()
+	print val
+
 
 
 def main():
-	path = "/home/cerasmae/Desktop/SP/cleaned-data";
+	path = "/home/cerasmae/Desktop/Celine-Thesis/cleaned-data";
+	# https://stackoverflow.com/questions/30265592/list-directories-python-osx
+	# path = "/Users/rl-14/Desktop/Celine-Thesis/cleaned-data"
+
 	sys.path.append(path)
 	# files = os.listdir(path)
 	try:
@@ -212,7 +314,7 @@ def main():
 
 		for file in files:
 			file_path = path+"/"+file
-			# print file_path
+			# print file
 
 			try:
 				curr_file = open(file_path)
@@ -239,12 +341,16 @@ def main():
 	except IOError:
 		print ("something is probably wrong with the path")
 
-UNIQUE_CORPUS = "/home/cerasmae/Desktop/SP/Proto-SP/corpus/unique-corpus.json"
-with open(UNIQUE_CORPUS, mode = "w") as uc:
-	json.dump([], uc)
+# UNIQUE_CORPUS = "/home/cerasmae/Desktop/SP/Proto-SP/corpus/unique-corpus.json"
+# with open(UNIQUE_CORPUS, mode = "w") as uc:
+# 	json.dump([], uc)
+# uc.close()
 
-uc.close()
-main()
+
+# main()
+
+remove_words()
+
 # trying()
 
 
