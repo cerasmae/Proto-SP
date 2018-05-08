@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-
 import sys, os, re, unittest
 import unicodedata
 import json
@@ -35,10 +37,14 @@ def tokenizer(all_lines):
 		# print curr_line, len(curr_line), curr_line[len(curr_line)-1]
 
 		if count == 1:
-			print line
+			# print line
 			curr_data['title'] = line.upper()
 
-		elif count == 2: #- gets the year of the date
+		elif count == 2: # gets the year of the date
+
+			if "-" in curr_line[0]:
+				# print "splitting by - here"
+				curr_line = curr_line[0].split("-")
 
 			file_name = "corpus/"+curr_line[len(curr_line)-1]+"-corpus.json"
 
@@ -49,12 +55,12 @@ def tokenizer(all_lines):
 				type_action = "w"
 				new = True
 
-			print file_name, new, type_action
+			# print file_name, new, type_action
 
 			
 			
 			if not new:
-				print "not new-"
+				# print "not new: " + file_name
 				corpus = open(file_name)
 				corpus_data = json.load(corpus)
 				# print corpus_data
@@ -92,7 +98,7 @@ def tokenizer(all_lines):
 						if not proper_noun:
 
 							if not hasNumbers(curr_string) and notALink(curr_string):	# check if string does not have any number or any ".com" to signify a link
-								cleaned_str = re.sub(r'[^A-Za-z.\\\'-]', '', curr_string)	# removes other characters that are not alphabet and selected symbols
+								cleaned_str = re.sub(r'[^A-Za-zÀ-ÿ.\\\'-]', '', curr_string.encode("utf-8"))	# removes other characters that are not alphabet and selected symbols
 								cleaned_str = cleaned_str.lower()
 								
 								if cleaned_str[len(cleaned_str)-1] == ".":
@@ -141,38 +147,43 @@ def tokenizer(all_lines):
 
 	valid_data = check_english_dict(valid_data)
 
-	print valid_data, "what"
+	# print valid_data, "what"
+	valid_string = ""
+	for datum in valid_data:
+		valid_string = valid_string + datum + " "
 
-	# curr_data['words'] = valid_data
+	valid_string = valid_string.strip()
 
-	# corpus_data['corpus'].append(curr_data)
-	# corpus = open(file_name, "w-")
-	# json.dump(corpus_data, corpus)
+	curr_data['words'] = valid_string
+
+	corpus_data['corpus'].append(curr_data)
+	corpus = open(file_name, "w")
+	json.dump(corpus_data, corpus)
 	# or
 	# for vd in valid_data:
 	# 	corpus.write(vd+"\n")
 
-	# corpus.close()
+	corpus.close()
 
+	unique_dict = dict((el, 1) for el in valid_data)
 
 	# code for th-e unique corpus
-	# if os.stat(UNIQUE_CORPUS).st_size > 2:
-	# 	print "not empty"
-	# 	with open(UNIQUE_CORPUS, mode = "r") as uc:
-	# 		uc_data = json.load(uc)
-	# 	uc.close()
+	if os.stat(UNIQUE_CORPUS).st_size > 2:
+		# print "not empty"
+		with open(UNIQUE_CORPUS, mode = "r") as uc:
+			uc_data = json.load(uc)
+		uc.close()
 
-	# 	with open(UNIQUE_CORPUS, mode = "w") as uc:
-	# 		for curr_str in valid_data:
-	# 			if curr_str not in uc_data:
-	# 				uc_data.append(curr_str)
-	# 		json.dump(uc_data, uc)
+		with open(UNIQUE_CORPUS, mode = "w") as uc:
+			for curr_str in valid_data:
+				uc_data[curr_str] = 1
+			json.dump(uc_data, uc)
+		uc.close()
+	else:
+		with open(UNIQUE_CORPUS, mode = "w") as uc:
+			json.dump(unique_dict, uc)
+		uc.close()
 
-	# 	uc.close()
-	# else:
-	# 	with open(UNIQUE_CORPUS, mode = "w") as uc:
-	# 		json.dump(valid_data, uc)
-	# 	uc.close()
 
 def unique_corpus(valid_data):
 	corpus_file = open("corpus/2009-corpus.txt", "w")
@@ -187,6 +198,7 @@ def unique_corpus(valid_data):
 	json.dump(corpus_data, corpus_file)
 
 	corpus_file.close()
+
 
 def check_english_dict(valid_data):
 	eng_dict = open("words_dictionary.json", "r")
@@ -205,9 +217,7 @@ def check_english_dict(valid_data):
 		except Exception, e:
 			repr(e)
 
-	
-
-	print removed_words
+	# print removed_words
 
 	try:
 		wordsjson = open("removed_words.json", "r")
@@ -294,9 +304,16 @@ def trying():
 
 
 def main():
-	path = "/home/cerasmae/Desktop/Celine-Thesis/cleaned-data";
+	# path = "/home/cerasmae/Desktop/Celine-Thesis/cleaned-data";
 	# https://stackoverflow.com/questions/30265592/list-directories-python-osx
-	# path = "/Users/rl-14/Desktop/Celine-Thesis/cleaned-data"
+	
+
+	# bomboradyo-scrape
+	# path = "/Users/rl-14/Desktop/Celine-Thesis/all-data/bomboradyo-scrape/error"
+	# bismag data
+	# path = "/Users/rl-14/Desktop/Celine-Thesis/all-data/cleaned-data"
+	# all data
+	path = "/Users/rl-14/Desktop/Celine-Thesis/all-data-reordered/all"
 
 	sys.path.append(path)
 	# files = os.listdir(path)
@@ -323,34 +340,42 @@ def main():
 				# tokenizer(lines)
 
 				# testing purposes
-				if count <= 3:
-					print count, file_path
-					tokenizer(lines)
+
+				# print count, file
+
+				# if count <= 15:
+				print count, file
+				tokenizer(lines)
 					# check_duplicate()
 					# for line in lines:
 					# 	print line
-				else:
-					True
+				# else:
+				# 	print count, "here"
+				# 	break
 					# print count, file_path
 
-			except IOError:
-				print ("could not read") 
+			except Exception, e:
+				err_file = open('errors.txt', 'a')
+				err_file.write(file_path + "\n")
+				err_file.close()
+				print repr(e)
 
 			count += 1
 
-	except IOError:
-		print ("something is probably wrong with the path")
+	except Exception, e:
+		print repr(e)
+
+	print "done"
 
 # UNIQUE_CORPUS = "/home/cerasmae/Desktop/SP/Proto-SP/corpus/unique-corpus.json"
+UNIQUE_CORPUS = "/Users/rl-14/Desktop/Celine-Thesis/Proto-SP/corpus/unique-corpus.json"
 # with open(UNIQUE_CORPUS, mode = "w") as uc:
 # 	json.dump([], uc)
 # uc.close()
 
 
-# main()
-
-remove_words()
-
+main()
+# remove_words()
 # trying()
 
 
