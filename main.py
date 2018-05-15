@@ -31,6 +31,7 @@ def tokenizer(all_lines):
 	valid_data = []
 	new = True
 	curr_data = {}
+	curr_date = ""
 	for line in all_lines:
 
 		curr_line = line.split()
@@ -46,7 +47,9 @@ def tokenizer(all_lines):
 				# print "splitting by - here"
 				curr_line = curr_line[0].split("-")
 
-			file_name = "corpus/"+curr_line[len(curr_line)-1]+"-corpus.json"
+			curr_date = curr_line[len(curr_line)-1]
+
+			file_name = "corpus/"+curr_date+"-corpus.json"
 
 			if os.path.exists(file_name):
 				type_action = "r"
@@ -92,7 +95,7 @@ def tokenizer(all_lines):
 						title = 1
 						if prev_string is not "": 	# if the word is not the very first word of the document
 							last_ch = prev_string[len(prev_string)-1]
-							if last_ch != "." and last_ch != ")": 	# checks if the previous string has a period .
+							if last_ch != "." and last_ch != ")" and last_ch != "!" and last_ch != "?" and last_ch != ":" and last_ch != "\"": 	# checks if the previous string has a period .
 								proper_noun = True					# it's a proper noun if there is no . in the prev_str
 
 						if not proper_noun:
@@ -183,6 +186,49 @@ def tokenizer(all_lines):
 		with open(UNIQUE_CORPUS, mode = "w") as uc:
 			json.dump(unique_dict, uc)
 		uc.close()
+
+	# code for word corpus
+	wc_file_name = "wcorpus/"+curr_date+"-corpus.txt"
+	wcorpus_data = {}
+
+	if os.path.exists(wc_file_name):
+		new = False
+	else:
+		new = True
+
+
+	if not new:
+		wcorpus = open(wc_file_name)
+		wcorpus_data = json.load(wcorpus)
+		wcorpus.close()
+
+	wcorpus = open(wc_file_name, "w")
+		# json.dump(corpus_data-, corpus)
+	for v_datum in valid_data:
+		wcorpus_data[v_datum] = 1
+		# wcorpus_data.append(v_datum)
+
+	json.dump(wcorpus_data, wcorpus)
+	wcorpus.close()
+
+	all_corpus = "corpus/all-corpus.json"
+	ac_data = []
+	# code for all corpus
+	if os.stat(all_corpus).st_size > 0:
+		# print "not empty"
+		with open(all_corpus, mode = "r") as ac:
+			ac_data = json.load(ac)
+		ac.close()
+
+		with open(all_corpus, mode = "w") as ac:
+			ac_data.append(valid_string)
+			json.dump(ac_data, ac)
+		ac.close()
+	else:
+		with open(all_corpus, mode = "w") as ac:
+			ac_data.append(valid_string)
+			json.dump(ac_data, ac)
+		ac.close()
 
 
 def unique_corpus(valid_data):
@@ -351,7 +397,7 @@ def main():
 					# 	print line
 				# else:
 				# 	print count, "here"
-				# 	break
+					# break
 					# print count, file_path
 
 			except Exception, e:
